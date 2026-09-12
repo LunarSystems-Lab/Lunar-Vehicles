@@ -1,0 +1,89 @@
+/* lunar-vehicles oil gauge. Copyright (C) 2026 Lunar. SPDX-License-Identifier: GPL-3.0-only */
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap");
+
+:root {
+    --amber: #f5c518;
+    --ink: #f4f1e6;
+    --mute: #9a9178;
+    --bg: rgba(18, 17, 12, 0.88);
+    --warn: #e0b040;
+    --crit: #e04545;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+    user-select: none;
+}
+
+.oil {
+    position: absolute;
+    right: 2.6vw;
+    bottom: 16vh;
+    width: min(160px, 36vw);
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid rgba(245, 197, 24, 0.32);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.3s ease;
+}
+
+.oil.is-open {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.oil.is-warn { border-color: rgba(224, 176, 64, 0.55); }
+.oil.is-crit { border-color: rgba(224, 69, 69, 0.65); }
+
+.oil-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+}
+
+.oil-label span {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(245, 197, 24, 0.9);
+}
+
+.oil-label b {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 18px;
+    color: var(--ink);
+}
+
+.oil-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(245, 197, 24, 0.16);
+    overflow: hidden;
+}
+
+.oil-track i {
+    display: block;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, rgba(245, 197, 24, 0.4), var(--amber));
+    transform-origin: left center;
+    transform: scaleX(1);
+    transition: transform 0.3s ease, background 0.25s ease;
+}
+
+.oil.is-warn .oil-track i {
+    background: linear-gradient(90deg, rgba(224, 176, 64, 0.45), var(--warn));
+}
+
+.oil.is-crit .oil-track i {
+    background: linear-gradient(90deg, rgba(224, 69, 69, 0.5), var(--crit));
+}
