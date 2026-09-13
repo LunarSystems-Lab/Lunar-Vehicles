@@ -142,7 +142,118 @@ exports('ServiceOil', function(plate, grade, fill)
         oil = fill,
         oilGrade = type(grade) == 'string' and grade:sub(1, 12) or 'Serviced',
     }, false)
-    return ok, state
+    return ok, state, fill
+end)
+
+local function bottleCfg(itemName)
+    itemName = tostring(itemName or '')
+    local list = (Config.Oil and Config.Oil.bottles) or {}
+    for i = 1, #list do
+        if list[i].item == itemName then return list[i] end
+    end
+end
+
+local function registerOilBottles()
+    if not Config.Oil or Config.Oil.enabled == false then return end
+    local list = Config.Oil.bottles or {}
+    for i = 1, #list do
+        local bottle = list[i]
+        local itemName = bottle.item
+        if type(itemName) == 'string' and itemName ~= '' then
+            QBCore.Functions.CreateUseableItem(itemName, function(source, item)
+                TriggerClientEvent('lunar-vehicles:client:useOilBottle', source, itemName)
+            end)
+        end
+    end
+    if #list > 0 then
+        print(('[lunar-vehicles] %s oil bottle(s) registered'):format(#list))
+    end
+end
+
+QBCore.Functions.CreateCallback('lunar-vehicles:fillOil', function(source, cb, data)
+    if not Config.Oil or Config.Oil.enabled == false then
+        cb({ ok = false, message = 'Oil system is disabled.' })
+        return
+    end
+    local Player = QBCore.Functions.GetPlayer(source)
+    if not Player then
+        cb({ ok = false, message = 'Player missing.' })
+        return
+    end
+    local itemName = tostring(data and data.item or '')
+    local bottle = bottleCfg(itemName)
+    if not bottle then
+        cb({ ok = false, message = 'Unknown oil.' })
+        return
+    end
+    local item = Player.Functions.GetItemByName(itemName)
+    if not item or (tonumber(item.amount) or 0) < 1 then
+        cb({ ok = false, message = 'You need ' .. (bottle.label or 'oil') .. '.' })
+        return
+    end
+
+    local ped = GetPlayerPed(source)
+    if not ped or ped == 0 then
+        cb({ ok = false, message = 'Invalid ped.' })
+        return
+    end
+    local coords = GetEntityCoords(ped)
+    local netId = tonumber(data and data.netId)
+    local veh = netId and NetworkGetEntityFromNetworkId(netId) or 0
+    if veh == 0 or not DoesEntityExist(veh) then
+        cb({ ok = false, message = 'Vehicle gone.' })
+        return
+    end
+    local vcoords = GetEntityCoords(veh)
+    local dist = (Config.Oil.fillDistance or 2.8) + 2.0
+    if #(coords - vcoords) > dist then
+        cb({ ok = false, message = 'Too far from the vehicle.' })
+        return
+    end
+
+    if not Player.Functions.RemoveItem(itemName, 1) then
+        cb({ ok = false, message = 'Could not take the oil.' })
+        return
+    end
+    if GetResourceState('qb-inventory') == 'started' and QBCore.Shared.Items[itemName] then
+        TriggerClientEvent('qb-inventory:client:ItemBox', source, QBCore.Shared.Items[itemName], 'remove', 1)
+    end
+
+    local fill = tonumber(bottle.fill) or 100.0
+    if fill > 100.0 then fill = math.min(100.0, (fill / 1000.0) * 100.0) end
+    fill = math.max(0.0, math.min(100.0, fill))
+    local grade = type(bottle.grade) == 'string' and bottle.grade:sub(1, 12) or 'Serviced'
+    local plate = normPlate(data and data.plate)
+    if plate == '' and veh ~= 0 then
+        plate = normPlate(GetVehicleNumberPlateText(veh) or '')
+    end
+
+    local owned = false
+    if plate ~= '' then
+        local okSave = setState(plate, { oil = fill, oilGrade = grade }, false)
+        owned = okSave and true or false
+    end
+
+    TriggerClientEvent('lunar-vehicles:client:oilServiced', source, {
+        plate = plate,
+        fill = fill,
+        grade = grade,
+    })
+
+    cb({
+        ok = true,
+        fill = fill,
+        grade = grade,
+        owned = owned,
+        message = owned
+            and (('Filled %s%% %s — logged to the vehicle.'):format(math.floor(fill + 0.5), grade))
+            or (('Filled %s%% %s.'):format(math.floor(fill + 0.5), grade)),
+    })
+end)
+
+CreateThread(function()
+    Wait(500)
+    registerOilBottles()
 end)
 
 exports('RepairEngine', function(plate, amount)

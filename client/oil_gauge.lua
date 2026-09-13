@@ -26,7 +26,7 @@ local function oilPayload(state)
     local oil = tonumber(state.oil) or 100.0
     local cfg = Config.Oil
     local level = 'ok'
-    if oil <= (cfg.critical or 12.0) then
+    if oil <= (cfg.critical or cfg.limpAt or 10.0) then
         level = 'crit'
     elseif oil <= (cfg.warn or 28.0) then
         level = 'warn'
@@ -69,15 +69,23 @@ CreateThread(function()
 
             state.oil = math.max(0.0, (tonumber(state.oil) or 100.0) - burn * dt * 10.0)
 
-            if state.oil <= (cfg.critical or 12.0) then
-                local eng = tonumber(state.engine) or 1000.0
-                state.engine = math.max(
-                    Config.Health.engineFloor or 0.0,
-                    eng - (cfg.criticalDamagePerSec or 1.8) * dt * 10.0
-                )
-                LunarVeh.ApplyNativeHealth(veh, state)
+            local limpAt = tonumber(cfg.limpAt) or tonumber(cfg.critical) or 10.0
+            if state.oil <= limpAt then
+                -- oil limp: power only (criticalDamagePerSec == 0 by default)
+                local dps = tonumber(cfg.criticalDamagePerSec) or 0.0
+                if dps > 0.0 then
+                    local limpFloor = tonumber(cfg.limpEngineFloor) or 420.0
+                    local eng = tonumber(state.engine) or 1000.0
+                    if eng > limpFloor then
+                        state.engine = math.max(limpFloor, eng - dps * dt * 10.0)
+                        LunarVeh.ApplyNativeHealth(veh, state)
+                    end
+                end
                 if LunarVeh.ApplyHandling then
                     LunarVeh.ApplyHandling(veh, state, LunarVeh.perf)
+                end
+                if LunarVeh.ApplyLimpCues then
+                    LunarVeh.ApplyLimpCues(veh, state)
                 end
             end
 
@@ -110,22 +118,33 @@ end)
 
 RegisterNetEvent('lunar-vehicles:client:oilServiced', function(data)
     data = data or {}
-    if not LunarVeh.state then
-        LunarVeh.state = Config.DefaultState()
-    end
     local fill = tonumber(data.fill) or 100.0
     if fill > 100.0 then fill = math.min(100.0, (fill / 1000.0) * 100.0) end
-    LunarVeh.state.oil = fill
-    if data.grade then LunarVeh.state.oilGrade = tostring(data.grade) end
-    LunarVeh.MarkDirty()
-    local veh = LunarVeh.current
-    if veh ~= 0 then
-        LunarVeh.ApplyNativeHealth(veh, LunarVeh.state)
-        if LunarVeh.ApplyHandling then
-            LunarVeh.ApplyHandling(veh, LunarVeh.state, LunarVeh.perf)
+    local grade = data.grade and tostring(data.grade) or nil
+    local plate = tostring(data.plate or '')
+    if plate == '' and LunarVeh.current ~= 0 then
+        plate = (GetVehicleNumberPlateText(LunarVeh.current) or ''):gsub('%s+', ''):upper()
+    end
+    if LunarVeh.RememberOilFill then
+        LunarVeh.RememberOilFill(plate, fill, grade)
+    else
+        if not LunarVeh.state then
+            LunarVeh.state = Config.DefaultState()
+        end
+        LunarVeh.state.oil = fill
+        if grade then LunarVeh.state.oilGrade = grade end
+        LunarVeh.MarkDirty()
+        local veh = LunarVeh.current
+        if veh ~= 0 then
+            LunarVeh.ApplyNativeHealth(veh, LunarVeh.state)
+            if LunarVeh.ApplyHandling then
+                LunarVeh.ApplyHandling(veh, LunarVeh.state, LunarVeh.perf)
+            end
         end
     end
-    setGauge(true, oilPayload(LunarVeh.state))
+    if LunarVeh.state then
+        setGauge(true, oilPayload(LunarVeh.state))
+    end
 end)
 
 exports('ShowOilGauge', function(show)

@@ -1,62 +1,16 @@
 lunar-vehicles
 Copyright (C) 2026 Lunar
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, version 3 of the License.
+This program is free software under the GNU GPL v3. See LICENSE.
+https://www.gnu.org/licenses/
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
+Contents: original Lua / HTML / CSS / JS for FiveM + QBCore.
+Does not include GTA V assets, streamed files, escrow binaries, or copies of qb-core / related frameworks.
 
-You should have received a copy of the GNU General Public License
-along with this program (LICENSE). If not, see
-<https://www.gnu.org/licenses/>.
+Depends on (install separately): FiveM, QBCore, oxmysql; optionally qb-inventory, qb-target, progressbar, ps-ui, qb-ambulancejob.
 
-------------------------------------------------------------------------------
-What this repository contains
-------------------------------------------------------------------------------
+Oil gauge may load Barlow Condensed / IBM Plex Mono from Google Fonts (SIL OFL).
+https://scripts.sil.org/OFL
 
-Original Lua, HTML, CSS, and JavaScript written for FiveM / QBCore.
-No Grand Theft Auto V, GTA Online, or other Take-Two / Rockstar game files.
-No streamed models, textures, audio, or escrow binaries.
-No copies of qb-core, qb-inventory, qb-target, oxmysql, or other frameworks.
-
-------------------------------------------------------------------------------
-Third-party software (not shipped — you install these yourself)
-------------------------------------------------------------------------------
-
-- FiveM / Cfx.re citizenfx runtime (their terms apply to your server)
-- QBCore Framework (separate project, separate license)
-- oxmysql (separate project, separate license)
-- qb-inventory / qb-target / qb-ambulancejob / ps-ui (optional or required
-  as listed in README; separate projects)
-
-This resource calls those resources through public events and exports only.
-It does not patch qb-core, qb-weapons, or qb-inventory.
-
-------------------------------------------------------------------------------
-Third-party fonts (loaded by the NUI at runtime, not copied here)
-------------------------------------------------------------------------------
-
-The oil gauge may load Barlow Condensed and IBM Plex Mono from Google Fonts.
-Those families are published under the SIL Open Font License.
-See https://scripts.sil.org/OFL
-
-------------------------------------------------------------------------------
-Preview images
-------------------------------------------------------------------------------
-
-preview/ contains NUI / README screenshots for this resource. They are not
-streamed GTA assets. You still need a lawful copy of GTA V to play FiveM.
-
-------------------------------------------------------------------------------
-No affiliation
-------------------------------------------------------------------------------
-
-Not affiliated with, endorsed by, or sponsored by Rockstar Games,
-Take-Two Interactive, Cfx.re, Tebex, or the QBCore project.
-
-You need a lawful copy of GTA V to play FiveM. You are responsible for
-following Cfx.re / FiveM terms on any server you run.
+Not affiliated with Rockstar Games, Take-Two, Cfx.re, Tebex, or QBCore.
+You need a lawful copy of GTA V to use FiveM.

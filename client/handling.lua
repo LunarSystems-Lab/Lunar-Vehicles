@@ -188,8 +188,28 @@ local function damageMults(state, dmg)
         out.fTractionCurveMax = tr + (1.0 - tr) * t
         out.fTractionCurveMin = tr + (1.0 - tr) * t
     end
-    if oil < (Config.Oil.critical or 12.0) then
-        out.fInitialDriveForce = (out.fInitialDriveForce or 1.0) * (dmg.oilCriticalForce or 0.65)
+    if oil <= ((Config.Oil and (Config.Oil.limpAt or Config.Oil.critical)) or 10.0) then
+        local force = (Config.Oil and tonumber(Config.Oil.limpForceMult)) or (dmg.oilCriticalForce or 0.36)
+        local steer = (Config.Oil and tonumber(Config.Oil.limpSteerMult)) or 0.88
+        out.fInitialDriveForce = (out.fInitialDriveForce or 1.0) * force
+        out.fInitialDragCoeff = (out.fInitialDragCoeff or 1.0) * 1.12
+        out.fSteeringLock = (out.fSteeringLock or 1.0) * steer
+        out.fBrakeForce = (out.fBrakeForce or 1.0) * 0.92
+    end
+
+    local engLimp = (Config.Health and tonumber(Config.Health.limpBelow)) or 200.0
+    if engine <= engLimp then
+        local force = (Config.Health and tonumber(Config.Health.limpForceMult)) or 0.36
+        local steer = (Config.Health and tonumber(Config.Health.limpSteerMult)) or 0.88
+        -- oil+engine limp: light extra cut only if oil limp already applied
+        if not (oil <= ((Config.Oil and (Config.Oil.limpAt or Config.Oil.critical)) or 10.0)) then
+            out.fInitialDriveForce = (out.fInitialDriveForce or 1.0) * force
+            out.fInitialDragCoeff = (out.fInitialDragCoeff or 1.0) * 1.10
+            out.fSteeringLock = (out.fSteeringLock or 1.0) * steer
+            out.fBrakeForce = (out.fBrakeForce or 1.0) * 0.90
+        else
+            out.fInitialDriveForce = (out.fInitialDriveForce or 1.0) * 0.9
+        end
     end
 
     local limp = Config.Panels.limpBelow or 45.0
@@ -236,9 +256,17 @@ function LunarVeh.ApplyHandling(veh, state, perf)
         LunarVeh.SyncDriveable(veh, state)
     end
 
-    if type(perf) == 'table' then
-        local power = clampField('power', tonumber(perf.power) or 1.0, 1.0)
-        local top = clampField('top', tonumber(perf.top) or 1.0, 1.0)
+    -- restore cheat power when leaving limp
+    if LunarVeh.IsLimp and LunarVeh.IsLimp(state) then
+        if LunarVeh.ApplyLimpCues then
+            LunarVeh.ApplyLimpCues(veh, state)
+        end
+    else
+        local power, top = 1.0, 1.0
+        if type(perf) == 'table' then
+            power = clampField('power', tonumber(perf.power) or 1.0, 1.0)
+            top = clampField('top', tonumber(perf.top) or 1.0, 1.0)
+        end
         SetVehicleCheatPowerIncrease(veh, power)
         ModifyVehicleTopSpeed(veh, top)
     end

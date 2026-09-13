@@ -65,17 +65,60 @@ function LunarVeh.AddMileage(state, speedMs, dtMs)
     state.mileage = (tonumber(state.mileage) or 0.0) + metres * 0.000621371
 end
 
+function LunarVeh.IsOilLimp(state)
+    if not state or not Config.Oil or Config.Oil.enabled == false then return false end
+    local oil = tonumber(state.oil) or 100.0
+    local at = tonumber(Config.Oil.limpAt) or tonumber(Config.Oil.critical) or 10.0
+    return oil <= at
+end
+
+function LunarVeh.IsEngineLimp(state)
+    if not state then return false end
+    local eng = tonumber(state.engine) or 1000.0
+    local below = (Config.Health and tonumber(Config.Health.limpBelow)) or 200.0
+    return eng <= below
+end
+
+function LunarVeh.IsLimp(state)
+    return LunarVeh.IsOilLimp(state) or LunarVeh.IsEngineLimp(state)
+end
+
+function LunarVeh.ApplyLimpCues(veh, state)
+    if not veh or veh == 0 or not DoesEntityExist(veh) or not state then return end
+    if not LunarVeh.IsLimp(state) then return end
+    local health = Config.Health or {}
+    local oil = Config.Oil or {}
+    local force = tonumber(health.limpForceMult) or tonumber(oil.limpForceMult) or 0.36
+    local top = tonumber(health.limpTopMult) or tonumber(oil.limpTopMult) or 0.52
+    if LunarVeh.IsOilLimp(state) and LunarVeh.IsEngineLimp(state) then
+        force = force * 0.85
+        top = top * 0.9
+    end
+    SetVehicleEngineOn(veh, true, true, false)
+    SetVehicleUndriveable(veh, false)
+    if SetVehicleCheatPowerIncrease then
+        SetVehicleCheatPowerIncrease(veh, force)
+    end
+    if ModifyVehicleTopSpeed then
+        ModifyVehicleTopSpeed(veh, top)
+    end
+end
+
 function LunarVeh.SyncDriveable(veh, state)
     if not veh or veh == 0 or not state or not DoesEntityExist(veh) then return end
     local crash = Config.Crash or {}
     local eng = tonumber(state.engine) or 1000.0
-    if eng <= (crash.undriveableBelow or 110.0) then
+    if eng <= (crash.undriveableBelow or 70.0) then
         SetVehicleUndriveable(veh, true)
         SetVehicleEngineOn(veh, false, true, true)
         return
     end
     SetVehicleUndriveable(veh, false)
-    if eng <= (crash.stallBelow or 180.0) and GetIsVehicleEngineRunning(veh) then
+    if LunarVeh.IsLimp(state) then
+        LunarVeh.ApplyLimpCues(veh, state)
+        return
+    end
+    if eng <= (crash.stallBelow or 90.0) and GetIsVehicleEngineRunning(veh) then
         if GetGameTimer() % 7 == 0 then
             SetVehicleEngineOn(veh, false, true, true)
         end
@@ -248,6 +291,9 @@ function LunarVeh.LoadForVehicle(veh)
             LunarVeh.SetHandlingProfile(res.handling)
         end
         LunarVeh.state = Config.MergeState(res and res.state)
+        if LunarVeh.MergeSessionOil then
+            LunarVeh.state = LunarVeh.MergeSessionOil(plate, LunarVeh.state)
+        end
         LunarVeh.perf = LunarVeh.ClampPerf and LunarVeh.ClampPerf(res and res.perf) or (res and res.perf or nil)
         LunarVeh.owned = res and res.owned and true or false
         LunarVeh.dirty = false

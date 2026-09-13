@@ -80,5 +80,5 @@ Config.Handling.damage = {
     tractionMult = 0.62,
     panelLimpTraction = 0.78,
     panelLimpSteer = 0.84,
-    oilCriticalForce = 0.45,
+    oilCriticalForce = 0.36,
 }

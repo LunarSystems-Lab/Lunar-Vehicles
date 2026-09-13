@@ -9,8 +9,8 @@ lua54 'yes'
 
 name 'lunar-vehicles'
 author 'Lunar'
-description 'QBCore vehicle feel — crash damage, tyres, handling, oil (GPL-3.0)'
-version '1.2.0'
+description 'QBCore crash damage, tyres, handling, oil'
+version '1.4.0'
 
 ui_page 'html/index.html'
 
@@ -27,6 +27,7 @@ client_scripts {
     'client/damage.lua',
     'client/handling.lua',
     'client/oil_gauge.lua',
+    'client/oil.lua',
     'client/repair.lua',
 }
 

@@ -1,4 +1,4 @@
--- lunar-vehicles — buyer-facing config (data only)
+-- lunar-vehicles config
 -- Copyright (C) 2026 Lunar
 -- SPDX-License-Identifier: GPL-3.0-only
 
@@ -30,11 +30,32 @@ Config.Oil = {
     throttleBurn = 0.018,
     highRpm = 0.72,
     highRpmMult = 2.1,
-    critical = 12.0,
     warn = 28.0,
-    criticalDamagePerSec = 1.8,
+    -- limpAt: oil % that triggers limp (power cut, engine HP untouched)
+    limpAt = 10.0,
+    critical = 10.0,
+    criticalDamagePerSec = 0.0,
+    limpForceMult = 0.36,
+    limpTopMult = 0.52,
+    limpSteerMult = 0.88,
     showAlways = false,
     holdKey = 20, -- Z
+    bottles = {
+        {
+            item = 'lunar_oil',
+            label = 'Engine oil',
+            grade = 'Std',
+            fill = 100,
+            durationMs = 8000,
+            icon = 'fas fa-oil-can',
+        },
+    },
+    fillDistance = 2.8,
+    anim = {
+        dict = 'mini@repair',
+        clip = 'fixing_a_player',
+        flag = 1,
+    },
 }
 
 Config.Panels = {
@@ -72,6 +93,11 @@ Config.Health = {
     enforceEngine = true,
     enforceBody = true,
     tickMs = 250,
+    -- limpBelow: engine HP (0–1000) that triggers limp
+    limpBelow = 200.0,
+    limpForceMult = 0.36,
+    limpTopMult = 0.52,
+    limpSteerMult = 0.88,
 }
 
 -- Loss = (speed drop in m/s)^2 * K. 80 mph wall ≈ 36 m/s → write-off.
@@ -86,8 +112,8 @@ Config.Crash = {
     writeOffDelta = 26.0,
     writeOffEngine = 80.0,
     writeOffBody = 70.0,
-    stallBelow = 180.0,
-    undriveableBelow = 110.0,
+    stallBelow = 90.0,
+    undriveableBelow = 70.0,
     burstTyresAbove = 11.0,
     smashWindowsAbove = 12.0,
     breakDoorsAbove = 20.0,
@@ -99,7 +125,7 @@ Config.Crash = {
     finishLaststand = true,
 }
 
--- Stop the *car* cooking off. Occupants are not crash-proof.
+-- Vehicle won't explode from tank damage. Peds still take crash damage.
 Config.Safety = {
     noVehicleExplode = true,
     tankFloor = 550.0,
